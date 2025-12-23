@@ -1,5 +1,1 @@
-os
-openai
-flask
-dotenv
-faq-data
+Flask
