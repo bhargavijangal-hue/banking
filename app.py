@@ -1,56 +1,45 @@
-FAQs = [
-    {"question": "What are your account opening requirements?",
-     "answer": "To open an account you need a valid ID, proof of address, and initial deposit."},
-
-    {"question": "How do I reset my online banking password?",
-     "answer": "You can reset your password by clicking ‘Forgot Password’ on the login screen."},
-
-    {"question": "What are your customer service hours?",
-     "answer": "Customer support is available from 8AM to 8PM every day."},
-
-    {"question": "How do I check my account balance?",
-     "answer": "Log into the app or visit our website to view your balance."},
-]
-import os
-import openai
 from flask import Flask, request, jsonify
-from dotenv import load_dotenv
-from faq_data import FAQs
-
-load_dotenv()
-
-openai.api_key = os.getenv("OPENAI_API_KEY")
+import json
+import os
 
 app = Flask(__name__)
 
-@app.post("/chat")
-def chatbot():
-    data = request.json
-    user_msg = data.get("message", "").strip()
+def load_faq(json_path="faq_data.json"):
+    if not os.path.exists(json_path):
+        return []
+    with open(json_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return data.get("faqs", [])
 
-    if not user_msg:
-        return jsonify({"error": "Empty message"}), 400
+faq_list = load_faq()
 
-    # Build initial prompt to help the model answer FAQs
-    faq_prompt = "Here are the FAQs and answers:\n"
-    for faq in FAQs:
-        faq_prompt += f"Q: {faq['question']}\nA: {faq['answer']}\n\n"
+def find_answer(user_msg: str):
+    msg = user_msg.lower().strip()
+    # exact match
+    for item in faq_list:
+        q = item.get("question", "").lower().strip()
+        if msg == q:
+            return item.get("answer")
+    # substring / keyword match
+    for item in faq_list:
+        q = item.get("question", "").lower().strip()
+        if q in msg:
+            return item.get("answer")
+    # fallback
+    return "Sorry, I didn't understand that. Could you please rephrase?"
 
-    prompt = f"""{faq_prompt}
-    User query: {user_msg}
-    Answer:"""
+@app.route("/", methods=["GET"])
+def home():
+    return "Bank FAQ Bot is running. Use POST /chat with JSON {\"message\": \"your question\"}"
 
-    # Call OpenAI’s Chat Completion or GPT model
-    response = openai.ChatCompletion.create(
-        model="gpt-4.1-mini",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=150,
-        temperature=0.2
-    )
-
-    answer = response.choices[0].message["content"].strip()
-
-    return jsonify({"user": user_msg, "reply": answer})
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.get_json()
+    if (not data) or ("message" not in data):
+        return jsonify({"error": "No message provided"}), 400
+    user_msg = data["message"]
+    answer = find_answer(user_msg)
+    return jsonify({"response": answer})
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True)
