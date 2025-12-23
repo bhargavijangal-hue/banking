@@ -1,0 +1,32 @@
+{
+  "faqs": [
+    {
+      "question": "what are your account types",
+      "answer": "We offer Savings Accounts, Current Accounts, Fixed Deposits and Recurring Deposits."
+    },
+    {
+      "question": "how to open account",
+      "answer": "You can open an account by visiting our nearest branch with valid ID and address proof, or you may apply online through our portal."
+    },
+    {
+      "question": "savings account interest rate",
+      "answer": "Our current savings account interest rate is 3.5% per annum. Please note interest rates are subject to change — check latest updates on website or nearest branch."
+    },
+    {
+      "question": "nearest branch address",
+      "answer": "Please visit our branch locator page or provide your city/pincode so we can guide you to the nearest branch."
+    },
+    {
+      "question": "loan interest rate",
+      "answer": "Loan interest rates depend on loan type, tenure and credit history. Please contact our customer support or visit the loan calculator page."
+    },
+    {
+      "question": "hello",
+      "answer": "Hello! Welcome to BankXYZ. How can I help you today?"
+    },
+    {
+      "question": "bye",
+      "answer": "Goodbye! Thank you for choosing BankXYZ. Have a nice day!"
+    }
+  ]
+}
