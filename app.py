@@ -1,45 +1,34 @@
-from flask import Flask, request, jsonify
-import json
-import os
+import pandas as pd
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer
 
-app = Flask(__name__)
+# 1. Load FAQ data
+df = pd.read_csv("BankFAQs.csv")
 
-def load_faq(json_path="faq_data.json"):
-    if not os.path.exists(json_path):
-        return []
-    with open(json_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    return data.get("faqs", [])
+# 2. Prepare embedding vectorizer
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(df["question"])
 
-faq_list = load_faq()
+print("📌 Banking FAQ Bot is ready! Ask your questions (type EXIT to quit).")
 
-def find_answer(user_msg: str):
-    msg = user_msg.lower().strip()
-    # exact match
-    for item in faq_list:
-        q = item.get("question", "").lower().strip()
-        if msg == q:
-            return item.get("answer")
-    # substring / keyword match
-    for item in faq_list:
-        q = item.get("question", "").lower().strip()
-        if q in msg:
-            return item.get("answer")
-    # fallback
-    return "Sorry, I didn't understand that. Could you please rephrase?"
+while True:
+    user_input = input("\nYou: ")
 
-@app.route("/", methods=["GET"])
-def home():
-    return "Bank FAQ Bot is running. Use POST /chat with JSON {\"message\": \"your question\"}"
+    if user_input.strip().lower() == "exit":
+        print("Bot: Thank you! Have a great day! 😊")
+        break
 
-@app.route("/chat", methods=["POST"])
-def chat():
-    data = request.get_json()
-    if (not data) or ("message" not in data):
-        return jsonify({"error": "No message provided"}), 400
-    user_msg = data["message"]
-    answer = find_answer(user_msg)
-    return jsonify({"response": answer})
+    # 3. Transform user query into vector
+    query_vec = vectorizer.transform([user_input])
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    # 4. Compute similarity with FAQ questions
+    similarities = cosine_similarity(query_vec, X)
+    idx = np.argmax(similarities)
+
+    # 5. Simple threshold to check match quality
+    if similarities[0][idx] < 0.3:
+        print("Bot: Sorry, I’m not sure about that. Can you rephrase?")
+    else:
+        response = df.iloc[idx]["answer"]
+        print(f"Bot: {response}")
