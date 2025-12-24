@@ -1,1 +1,4 @@
-Flask
+python-Levenshtein
+scikit-learn
+numpy
+pandas
